@@ -1,10 +1,5 @@
  sbed TODO file
 
-* step 1
-
- - figure out how to correctly import madtty.git as readonly upstream
-   to pull changes from
-
 * step 2
 
  - open a screen window of fixed size
