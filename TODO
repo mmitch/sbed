@@ -1,0 +1,36 @@
+ sbed TODO file
+
+* step 1
+
+ - figure out how to correctly import madtty.git as readonly upstream
+   to pull changes from
+
+* step 2
+
+ - open a screen window of fixed size
+ - allow cursor movement
+ - allow character input
+ - allow quit
+ - ?? support insert/overwrite
+   - too early to implement?
+   - future framework unclear
+
+* step 3
+
+ - implement screen mode
+   - implement DatFreig key
+   - distinguish 'old' and 'new' characters
+ - allow undo of uncommited changes
+
+* step 4
+
+ - add input blocks
+   - only input blocks can be edited
+   - everything else is write-protected
+ - add tab/enter movements to next block/next line
+
+* step 5
+
+ - ...
+
+

@@ -1,0 +1,25 @@
+
+ sbed - screen based editor
+
+ 2008 (c) by Christian Garbs <mitch@cgarbs.de>
+
+
+This is a text editor with a resemblance to IBMs ISPF editor.
+While I have found some free editors that support "line commands",
+they lack the "screen based editing".  So to get the real feeling
+of a 3270 terminal or terminal emulation, I knew I had to write my
+own editor.  I recently came across dvtm and madtty and now I
+finally have a screen library that is (hopefully) fit for my needs
+as well as a simple and lucid application to use as an example of
+how to use this screen library.
+
+
+
+sbed:
+  http://www.cgarbs.de/cgi-bin/gitweb.cgi/sbed.git
+
+dvtm:
+  http://www.brain-dump.org/projects/dvtm/
+
+madtty:
+  http://git.madism.org/?p=apps/madtty.git
