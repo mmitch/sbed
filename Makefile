@@ -26,7 +26,7 @@ debug: clean
 
 clean:
 	@echo cleaning
-	@rm -f sbed ${OBJ} sbed-${VERSION}.tar.gz
+	@rm -f sbed ${OBJ} sbed-${VERSION}.tar.gz *~
 
 dist: clean
 	@echo creating dist tarball
