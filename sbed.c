@@ -54,6 +54,10 @@ typedef struct {
 #endif
 
 /* commands for use by keybindings */
+void cursor_up();
+void cursor_down();
+void cursor_left();
+void cursor_right();
 void quit();
 
 unsigned int bh = 1, by, waw, wah, wax, way;
@@ -63,6 +67,7 @@ unsigned int bh = 1, by, waw, wah, wax, way;
 const char *shell;
 bool need_screen_resize = true;
 int width, height;
+unsigned int cx = 0, cy = 0;
 bool running = true;
 
 madtty_t *term;
@@ -172,6 +177,40 @@ cleanup(){
 }
 
 void
+update_cursor(){
+	move(cy,cx);
+	refresh();
+}
+
+void cursor_up(){
+	if (cy == 0)
+		cy = height;
+	cy--;
+	update_cursor();
+}
+
+void cursor_down(){
+	cy++;
+	if (cy == height)
+		cy = 0;
+	update_cursor();
+}
+
+void cursor_left(){
+	if (cx == 0)
+		cx = width;
+	cx--;
+	update_cursor();
+}
+
+void cursor_right(){
+	cx++;
+	if (cx == width)
+		cx = 0;
+	update_cursor();
+}
+
+void
 quit(){
 	running = false;
 }
@@ -216,6 +255,7 @@ main(int argc, char *argv[]) {
 				else {
 					madtty_keypress(term, code);
 					wrefresh(stdscr);
+					eprint("%d;", code);
 				}
 			}
 			if(r == 1) /* no data available on pty's */
