@@ -59,6 +59,8 @@ void cursor_up();
 void cursor_down();
 void cursor_left();
 void cursor_right();
+void next_field();
+void next_line();
 void quit();
 
 unsigned int bh = 1, by, waw, wah, wax, way;
@@ -184,6 +186,12 @@ update_cursor(){
 }
 
 void
+enter_character(unsigned int code){
+	addch(code);
+	cursor_advance();
+}
+
+void
 cursor_advance(){
 	cx++;
 	if (cx >= width){
@@ -222,6 +230,17 @@ cursor_right(){
 	if (cx >= width)
 		cx = 0;
 	update_cursor();
+}
+
+void
+next_field(){
+	next_line();
+}
+
+void
+next_line(){
+	cx = 0;
+	cursor_down();
 }
 
 void
@@ -266,13 +285,12 @@ main(int argc, char *argv[]) {
 			if(code >= 0){
 				if(key = keybinding(code))
 					key->action.cmd();
-				else {
-/*					madtty_keypress(term, code); */
-					addch(code);
-					cursor_advance();
-					refresh();
-					/* eprint("%d;", code); */
-				}
+				else
+					if ((code >= 32) && (code < 128)) {
+						enter_character(code);
+						refresh();
+					} else
+						eprint("%04o;", code);
 			}
 			if(r == 1) /* no data available on pty's */
 				continue;

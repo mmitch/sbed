@@ -4,4 +4,6 @@ Key keys[] = {
 	{ KEY_UP,	cursor_up },
 	{ KEY_LEFT,	cursor_left },
 	{ KEY_RIGHT,	cursor_right },
+	{ '\t',		next_field },
+	{ '\n',		next_line },
 };
