@@ -54,6 +54,7 @@ typedef struct {
 #endif
 
 /* commands for use by keybindings */
+void cursor_advance();
 void cursor_up();
 void cursor_down();
 void cursor_left();
@@ -182,30 +183,43 @@ update_cursor(){
 	refresh();
 }
 
-void cursor_up(){
-	if (cy == 0)
+void
+cursor_advance(){
+	cx++;
+	if (cx >= width){
+		cx = 0;
+		cursor_down();
+	}
+}
+
+void
+cursor_up(){
+	if (cy < 1)
 		cy = height;
 	cy--;
 	update_cursor();
 }
 
-void cursor_down(){
+void
+cursor_down(){
 	cy++;
-	if (cy == height)
+	if (cy >= height)
 		cy = 0;
 	update_cursor();
 }
 
-void cursor_left(){
-	if (cx == 0)
+void
+cursor_left(){
+	if (cx < 1)
 		cx = width;
 	cx--;
 	update_cursor();
 }
 
-void cursor_right(){
+void
+cursor_right(){
 	cx++;
-	if (cx == width)
+	if (cx >= width)
 		cx = 0;
 	update_cursor();
 }
@@ -253,9 +267,11 @@ main(int argc, char *argv[]) {
 				if(key = keybinding(code))
 					key->action.cmd();
 				else {
-					madtty_keypress(term, code);
-					wrefresh(stdscr);
-					eprint("%d;", code);
+/*					madtty_keypress(term, code); */
+					addch(code);
+					cursor_advance();
+					refresh();
+					/* eprint("%d;", code); */
 				}
 			}
 			if(r == 1) /* no data available on pty's */
