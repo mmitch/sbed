@@ -24,11 +24,15 @@ sbed: ${OBJ}
 debug: clean
 	@make CFLAGS='${DEBUG_CFLAGS}'
 
+distclean: clean
+	@echo distcleaning
+	@rm -f *~
+
 clean:
 	@echo cleaning
-	@rm -f sbed ${OBJ} sbed-${VERSION}.tar.gz *~
+	@rm -f sbed ${OBJ} sbed-${VERSION}.tar.gz
 
-dist: clean
+dist: distclean
 	@echo creating dist tarball
 	@mkdir -p sbed-${VERSION}
 	@cp -R Makefile README TODO config.h config.mk \
@@ -37,4 +41,4 @@ dist: clean
 	@gzip sbed-${VERSION}.tar
 	@rm -rf sbed-${VERSION}
 
-.PHONY: all options clean dist debug
+.PHONY: all options clean dist distclean debug
