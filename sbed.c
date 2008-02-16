@@ -33,6 +33,15 @@
 #endif
 #define CTRL_ALT(k) ((k) + (129 - 'a'))
 
+typedef struct {
+        void (*cmd)(void);
+} Action;
+
+typedef struct {
+        unsigned int code;
+        Action action;
+} Key;
+
 #define COLOR(fg, bg) madtty_color_pair(fg, bg)
 #define countof(arr) (sizeof (arr) / sizeof((arr)[0]))
 #define sstrlen(str) (sizeof (str) - 1)
@@ -44,9 +53,12 @@
  #define debug eprint
 #endif
 
+/* commands for use by keybindings */
+void quit();
+
 unsigned int bh = 1, by, waw, wah, wax, way;
 
-/* #include "config.h" */
+#include "config.h"
 
 const char *shell;
 bool need_screen_resize = true;
@@ -122,6 +134,16 @@ resize_screen(){
 	need_screen_resize = false;
 }
 
+Key*
+keybinding(unsigned int code){
+        unsigned int i;
+        for(i = 0; i < countof(keys); i++){
+        	if(keys[i].code == code)
+        	return &keys[i];
+	}
+	return NULL;
+}
+
 void
 setup(){
 	int i;
@@ -150,9 +172,8 @@ cleanup(){
 }
 
 void
-quit(const char *args[]){
-	cleanup();
-	exit(EXIT_SUCCESS);
+quit(){
+	running = false;
 }
 
 void
@@ -188,9 +209,10 @@ main(int argc, char *argv[]) {
 
 		if(FD_ISSET(STDIN_FILENO, &rd)){
 			int code = getch();
+			Key *key;
 			if(code >= 0){
-				if(code == CTRL('q'))
-					running = false;
+				if(key = keybinding(code))
+					key->action.cmd();
 				else {
 					madtty_keypress(term, code);
 					wrefresh(stdscr);
