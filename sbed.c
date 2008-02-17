@@ -192,7 +192,7 @@ find_next_field(Pos p){
 	for (f = fields; f != NULL; f = f->next)
 		if (    ((f->pos.y == p.y) && (f->pos.x >= p.x) && (( found->pos.y != f->pos.y ) || (found->pos.x > f->pos.x)))
 		     || ((f->pos.y == found->pos.y) && (f->pos.x < found->pos.x) && (f->pos.x >= p.x))
-		     || ((f->pos.y > p.y) && (f->pos.y < found->pos.y)))
+		     || ((f->pos.y > p.y) && ((f->pos.y < found->pos.y) || ((f->pos.y == found->pos.y) && (f->pos.x < found->pos.x)))))
 		     	found = f;
 	if ((found->pos.y < p.y) || ((found->pos.y == p.y) && (found->pos.x < p.x)))
 		return find_first_field();
