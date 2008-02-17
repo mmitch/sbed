@@ -42,6 +42,24 @@ typedef struct {
         Action action;
 } Key;
 
+typedef struct Label Label;
+struct Label {
+	unsigned int x;
+	unsigned int y;
+	unsigned int length;
+	const char *text;
+	Label *next;
+};
+
+typedef struct Field Field;
+struct Field {
+	unsigned int x;
+	unsigned int y;
+	unsigned int length;
+	char *content;
+	Field *next;
+};
+
 #define COLOR(fg, bg) madtty_color_pair(fg, bg)
 #define countof(arr) (sizeof (arr) / sizeof((arr)[0]))
 #define sstrlen(str) (sizeof (str) - 1)
@@ -63,6 +81,9 @@ void next_field();
 void next_line();
 void quit();
 
+/* internal functions */
+void draw_all();
+
 unsigned int bh = 1, by, waw, wah, wax, way;
 
 #include "config.h"
@@ -72,6 +93,8 @@ bool need_screen_resize = true;
 int width, height;
 unsigned int cx = 0, cy = 0;
 bool running = true;
+Label *labels;
+Field *fields;
 
 madtty_t *term;
 
@@ -81,23 +104,6 @@ eprint(const char *errstr, ...) {
 	va_start(ap, errstr);
 	vfprintf(stderr, errstr, ap);
 	va_end(ap);
-}
-
-void
-draw_all(bool border){
-	curs_set(0);
-	/* as a last step the selected window is redrawn,
-	 * this has the effect that the cursor position is
-	 * accurate
-	 */
-	refresh();
-	wrefresh(stdscr);
-}
-
-void
-redraw(const char *args[]){
-	wrefresh(curscr);
-	/* TODO */
 }
 
 void
@@ -137,19 +143,49 @@ resize_screen(){
 	#endif
 		wresize(stdscr, height, width);
 		wrefresh(curscr);
-		refresh();
+		draw_all();
 	}
 	need_screen_resize = false;
 }
 
 Key*
-keybinding(unsigned int code){
+find_key(unsigned int code){
         unsigned int i;
         for(i = 0; i < countof(keys); i++){
         	if(keys[i].code == code)
         	return &keys[i];
 	}
 	return NULL;
+}
+
+Field*
+find_field(unsigned int x, unsigned int y){
+	Field *i;
+	for (i = fields; i != NULL; i = i->next)
+		if ((y == i->y) && (x >= i->x) && (x < (i->x + i->length)))
+				return i;
+	return NULL;
+}
+
+Label*
+find_label(unsigned int x, unsigned int y){
+	Label *i;
+	for (i = labels; i != NULL; i = i->next)
+		if ((y == i->y) && (x >= i->x) && (x < (i->x + i->length)))
+				return i;
+	return NULL;
+}
+
+void
+addField(Field *new){
+	new->next = fields;
+	fields = new;
+}
+
+void
+addLabel(Label *new){
+	new->next = labels;
+	labels = new;
 }
 
 void
@@ -255,10 +291,70 @@ usage(){
 	exit(EXIT_FAILURE);
 }
 
+void
+draw_fields(){
+	Field *f;
+	unsigned int i;
+	for (f = fields; f != NULL; f = f->next){
+		move(f->y, f->x);
+		attrset(ATTR_INPUT);
+		addstr(f->content);
+		attrset(ATTR_INPUT_EMPTY);
+		for (i = strlen(f->content); i < f->length; i++)
+			addch(' ');
+	}
+}
+
+void
+draw_labels(){
+	Label *l;
+	unsigned int i;
+	attrset(ATTR_LABEL);
+	for (l = labels; l != NULL; l = l->next){
+		move(l->y, l->x);
+		addstr(l->text);
+	}
+}
+
+void
+draw_all(){
+	draw_fields();
+	draw_labels();
+	refresh();
+}
+
 int
-main(int argc, char *argv[]) {
+main(int argc, char *argv[]){
 	setup();
 	wrefresh(curscr);
+	
+	
+	/* test entries */
+	Label *label = calloc(sizeof(Label), 1);
+	label->x = 3;
+	label->y = 2;
+	label->text = "Test label";
+	label->length = strlen(label->text);
+	addLabel(label);
+
+	Field *field = calloc(sizeof(Field), 1);
+	field->x = 1;
+	field->y = 4;
+	field->length = 20;
+	field->content = calloc(sizeof(char), field->length+1);
+	sprintf(field->content, "eins");
+	addField(field);
+	
+	field = calloc(sizeof(Field), 1);
+	field->x = 1;
+	field->y = 6;
+	field->length = 20;
+	field->content = calloc(sizeof(char), field->length+1);
+	sprintf(field->content, "zwei");
+	addField(field);
+
+	draw_all();
+	
 	while(running){
 		int r, nfds = 0;
 		fd_set rd;
@@ -283,12 +379,15 @@ main(int argc, char *argv[]) {
 			int code = getch();
 			Key *key;
 			if(code >= 0){
-				if(key = keybinding(code))
+				if(key = find_key(code))
 					key->action.cmd();
 				else
-					if ((code >= 32) && (code < 128)) {
-						enter_character(code);
-						refresh();
+					if ((code >= 32) && (code < 128)){
+						if (find_field(cx, cy)){
+							enter_character(code);
+							refresh();
+						} else
+							beep();
 					} else
 						eprint("%04o;", code);
 			}
