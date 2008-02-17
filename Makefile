@@ -1,6 +1,6 @@
 include config.mk
 
-SRC += sbed.c madtty.c
+SRC += sbed.c
 OBJ = ${SRC:.c=.o}
 
 all: clean options sbed
@@ -36,7 +36,7 @@ dist: distclean
 	@echo creating dist tarball
 	@mkdir -p sbed-${VERSION}
 	@cp -R Makefile README TODO config.h config.mk \
-		${SRC} madtty.h sbed-${VERSION}
+		${SRC} sbed-${VERSION}
 	@tar -cf sbed-${VERSION}.tar sbed-${VERSION}
 	@gzip sbed-${VERSION}.tar
 	@rm -rf sbed-${VERSION}

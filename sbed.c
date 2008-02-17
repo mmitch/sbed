@@ -2,8 +2,8 @@
  * sbed - screen based editor
  * (c) 2008 Christian Garbs <mitch@cgarbs.de>
  *
- * Basic design and madtty inclusion is highly inspired by the dvtm
- * and reuses some code of it which is mostly
+ * Basic design is highly inspired by the dvtm and reuses some code of it
+ * which is mostly
  *
  * (c) 2007-2008 Marc Andre Tanner <mat at brain-dump dot org>
  *
@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <errno.h>
-#include "madtty.h"
+#include <stdlib.h>
 
 #define ALT(k)      ((k) + (161 - 'a'))
 #ifndef CTRL
@@ -63,7 +63,6 @@ struct Field {
 	Field *next;
 };
 
-#define COLOR(fg, bg) madtty_color_pair(fg, bg)
 #define countof(arr) (sizeof (arr) / sizeof((arr)[0]))
 #define sstrlen(str) (sizeof (str) - 1)
 #define max(x, y) ((x) > (y) ? (x) : (y))
@@ -99,8 +98,6 @@ Pos cursor;
 bool running = true;
 Label *labels;
 Field *fields;
-
-madtty_t *term;
 
 void
 eprint(const char *errstr, ...) {
@@ -238,10 +235,7 @@ setup(){
 	noecho();
    	keypad(stdscr, TRUE);
 	raw();
-	madtty_init_colors();
-	madtty_init_vt100_graphics();
 	getmaxyx(stdscr, height, width);
-        term = madtty_create(height, width);
 	resize_screen();
 	signal(SIGWINCH, sigwinch_handler);
 	signal(SIGCHLD, sigchld_handler);
