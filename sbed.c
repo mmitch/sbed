@@ -179,6 +179,38 @@ find_label(Pos pos){
 	return NULL;
 }
 
+Field*
+find_next_field(Pos p){
+	Field *f, *found;
+	
+	if (!fields)
+		return NULL;
+	if (f = find_field(p)){
+		p = f->pos;
+		p.x += f->length;
+	}
+	
+	found = fields;
+	for (f = fields; f != NULL; f = f->next)
+		if (    ((f->pos.y == p.y) && (f->pos.x >= p.x) && (( found->pos.y != f->pos.y ) || (found->pos.x > f->pos.x)))
+		     || ((f->pos.y == found->pos.y) && (f->pos.x < found->pos.x))
+		     || ((f->pos.y > p.y) && (f->pos.y < found->pos.y)))    /* TODO: Wraparound */
+		     	found = f;
+	return found;
+}
+
+Field*
+find_first_field(){
+	Pos p;
+	Field *f;
+	
+	p.x = 0;
+	p.y = 0;
+	if (f = find_field(p))
+		return f;
+	return find_next_field(p);
+}
+
 void
 addField(Field *new){
 	new->next = fields;
@@ -278,13 +310,17 @@ cursor_right(){
 
 void
 next_field(){
-	next_line();
+	Field *f;
+	if (f = find_next_field(cursor))
+		cursor = f->pos;
+	update_cursor();
 }
 
 void
 next_line(){
 	cursor.x = 0;
 	cursor_down();
+	next_field();
 }
 
 void
@@ -362,12 +398,12 @@ main(int argc, char *argv[]){
 	addField(field);
 
 
-/*	if (field = find_first_field())
+	if (field = find_first_field())
 		cursor = field->pos;
-	else { */
+	else {
 		cursor.x = 0;
 		cursor.y = 0;
-/*	} */
+	}
 
 	draw_all();
 	
