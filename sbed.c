@@ -42,10 +42,14 @@ typedef struct {
         Action action;
 } Key;
 
-typedef struct Label Label;
-struct Label {
+typedef struct {
 	unsigned int x;
 	unsigned int y;
+} Pos;
+
+typedef struct Label Label;
+struct Label {
+	Pos pos;
 	unsigned int length;
 	const char *text;
 	Label *next;
@@ -53,8 +57,7 @@ struct Label {
 
 typedef struct Field Field;
 struct Field {
-	unsigned int x;
-	unsigned int y;
+	Pos pos;
 	unsigned int length;
 	char *content;
 	Field *next;
@@ -91,7 +94,7 @@ unsigned int bh = 1, by, waw, wah, wax, way;
 const char *shell;
 bool need_screen_resize = true;
 int width, height;
-unsigned int cx = 0, cy = 0;
+Pos cursor;
 bool running = true;
 Label *labels;
 Field *fields;
@@ -159,20 +162,20 @@ find_key(unsigned int code){
 }
 
 Field*
-find_field(unsigned int x, unsigned int y){
-	Field *i;
-	for (i = fields; i != NULL; i = i->next)
-		if ((y == i->y) && (x >= i->x) && (x < (i->x + i->length)))
-				return i;
+find_field(Pos pos){
+	Field *f;
+	for (f = fields; f != NULL; f = f->next)
+		if ((pos.y == f->pos.y) && (pos.x >= f->pos.x) && (pos.x < (f->pos.x + f->length)))
+				return f;
 	return NULL;
 }
 
 Label*
-find_label(unsigned int x, unsigned int y){
-	Label *i;
-	for (i = labels; i != NULL; i = i->next)
-		if ((y == i->y) && (x >= i->x) && (x < (i->x + i->length)))
-				return i;
+find_label(Pos pos){
+	Label *l;
+	for (l = labels; l != NULL; l = l->next)
+		if ((pos.y == l->pos.y) && (pos.x >= l->pos.x) && (pos.x < (l->pos.x + l->length)))
+				return l;
 	return NULL;
 }
 
@@ -216,8 +219,13 @@ cleanup(){
 }
 
 void
+move_cursor(Pos pos){
+	move(pos.y, pos.x);
+}
+
+void
 update_cursor(){
-	move(cy,cx);
+	move_cursor(cursor);
 	refresh();
 }
 
@@ -229,42 +237,42 @@ enter_character(unsigned int code){
 
 void
 cursor_advance(){
-	cx++;
-	if (cx >= width){
-		cx = 0;
+	cursor.x++;
+	if (cursor.x >= width){
+		cursor.x = 0;
 		cursor_down();
 	}
 }
 
 void
 cursor_up(){
-	if (cy < 1)
-		cy = height;
-	cy--;
+	if (cursor.y < 1)
+		cursor.y = height;
+	cursor.y--;
 	update_cursor();
 }
 
 void
 cursor_down(){
-	cy++;
-	if (cy >= height)
-		cy = 0;
+	cursor.y++;
+	if (cursor.y >= height)
+		cursor.y = 0;
 	update_cursor();
 }
 
 void
 cursor_left(){
-	if (cx < 1)
-		cx = width;
-	cx--;
+	if (cursor.x < 1)
+		cursor.x = width;
+	cursor.x--;
 	update_cursor();
 }
 
 void
 cursor_right(){
-	cx++;
-	if (cx >= width)
-		cx = 0;
+	cursor.x++;
+	if (cursor.x >= width)
+		cursor.x = 0;
 	update_cursor();
 }
 
@@ -275,7 +283,7 @@ next_field(){
 
 void
 next_line(){
-	cx = 0;
+	cursor.x = 0;
 	cursor_down();
 }
 
@@ -296,7 +304,7 @@ draw_fields(){
 	Field *f;
 	unsigned int i;
 	for (f = fields; f != NULL; f = f->next){
-		move(f->y, f->x);
+		move_cursor(f->pos);
 		attrset(ATTR_INPUT);
 		addstr(f->content);
 		attrset(ATTR_INPUT_EMPTY);
@@ -311,7 +319,7 @@ draw_labels(){
 	unsigned int i;
 	attrset(ATTR_LABEL);
 	for (l = labels; l != NULL; l = l->next){
-		move(l->y, l->x);
+		move_cursor(l->pos);
 		addstr(l->text);
 	}
 }
@@ -320,7 +328,7 @@ void
 draw_all(){
 	draw_fields();
 	draw_labels();
-	refresh();
+	update_cursor();
 }
 
 int
@@ -331,27 +339,35 @@ main(int argc, char *argv[]){
 	
 	/* test entries */
 	Label *label = calloc(sizeof(Label), 1);
-	label->x = 3;
-	label->y = 2;
+	label->pos.x = 3;
+	label->pos.y = 2;
 	label->text = "Test label";
 	label->length = strlen(label->text);
 	addLabel(label);
 
 	Field *field = calloc(sizeof(Field), 1);
-	field->x = 1;
-	field->y = 4;
+	field->pos.x = 1;
+	field->pos.y = 4;
 	field->length = 20;
 	field->content = calloc(sizeof(char), field->length+1);
 	sprintf(field->content, "eins");
 	addField(field);
 	
 	field = calloc(sizeof(Field), 1);
-	field->x = 1;
-	field->y = 6;
+	field->pos.x = 1;
+	field->pos.y = 6;
 	field->length = 20;
 	field->content = calloc(sizeof(char), field->length+1);
 	sprintf(field->content, "zwei");
 	addField(field);
+
+
+/*	if (field = find_first_field())
+		cursor = field->pos;
+	else { */
+		cursor.x = 0;
+		cursor.y = 0;
+/*	} */
 
 	draw_all();
 	
@@ -383,7 +399,7 @@ main(int argc, char *argv[]){
 					key->action.cmd();
 				else
 					if ((code >= 32) && (code < 128)){
-						if (find_field(cx, cy)){
+						if (find_field(cursor)){
 							enter_character(code);
 							refresh();
 						} else
