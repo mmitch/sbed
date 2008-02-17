@@ -86,6 +86,7 @@ void quit();
 
 /* internal functions */
 void draw_all();
+Field *find_first_field();
 
 unsigned int bh = 1, by, waw, wah, wax, way;
 
@@ -193,9 +194,11 @@ find_next_field(Pos p){
 	found = fields;
 	for (f = fields; f != NULL; f = f->next)
 		if (    ((f->pos.y == p.y) && (f->pos.x >= p.x) && (( found->pos.y != f->pos.y ) || (found->pos.x > f->pos.x)))
-		     || ((f->pos.y == found->pos.y) && (f->pos.x < found->pos.x))
-		     || ((f->pos.y > p.y) && (f->pos.y < found->pos.y)))    /* TODO: Wraparound */
+		     || ((f->pos.y == found->pos.y) && (f->pos.x < found->pos.x) && (f->pos.x >= p.x))
+		     || ((f->pos.y > p.y) && (f->pos.y < found->pos.y)))
 		     	found = f;
+	if ((found->pos.y < p.y) || ((found->pos.y == p.y) && (found->pos.x < p.x)))
+		return find_first_field();
 	return found;
 }
 
@@ -390,11 +393,19 @@ main(int argc, char *argv[]){
 	addField(field);
 	
 	field = calloc(sizeof(Field), 1);
+	field->pos.x = 31;
+	field->pos.y = 4;
+	field->length = 20;
+	field->content = calloc(sizeof(char), field->length+1);
+	sprintf(field->content, "zwei");
+	addField(field);
+
+	field = calloc(sizeof(Field), 1);
 	field->pos.x = 1;
 	field->pos.y = 6;
 	field->length = 20;
 	field->content = calloc(sizeof(char), field->length+1);
-	sprintf(field->content, "zwei");
+	sprintf(field->content, "drei");
 	addField(field);
 
 
