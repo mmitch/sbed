@@ -18,6 +18,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <ncurses.h>
+#include <form.h>
 #include <stdio.h>
 #include <signal.h>
 #include <locale.h>
@@ -42,27 +43,6 @@ typedef struct {
         Action action;
 } Key;
 
-typedef struct {
-	unsigned int x;
-	unsigned int y;
-} Pos;
-
-typedef struct Label Label;
-struct Label {
-	Pos pos;
-	unsigned int length;
-	const char *text;
-	Label *next;
-};
-
-typedef struct Field Field;
-struct Field {
-	Pos pos;
-	unsigned int length;
-	char *content;
-	Field *next;
-};
-
 #define countof(arr) (sizeof (arr) / sizeof((arr)[0]))
 #define sstrlen(str) (sizeof (str) - 1)
 #define max(x, y) ((x) > (y) ? (x) : (y))
@@ -74,19 +54,11 @@ struct Field {
 #endif
 
 /* commands for use by keybindings */
-void cursor_advance();
-void cursor_up();
-void cursor_down();
-void cursor_left();
-void cursor_right();
-void next_field();
-void next_line();
 void quit();
 void redraw_screen();
 
 /* internal functions */
 void draw_all();
-Field *find_first_field();
 
 unsigned int bh = 1, by, waw, wah, wax, way;
 
@@ -95,10 +67,7 @@ unsigned int bh = 1, by, waw, wah, wax, way;
 const char *shell;
 bool need_screen_resize = true;
 int width, height;
-Pos cursor;
 bool running = true;
-Label *labels;
-Field *fields;
 
 void
 eprint(const char *errstr, ...) {
@@ -160,70 +129,6 @@ find_key(unsigned int code){
 	return NULL;
 }
 
-Field*
-find_field(Pos pos){
-	Field *f;
-	for (f = fields; f != NULL; f = f->next)
-		if ((pos.y == f->pos.y) && (pos.x >= f->pos.x) && (pos.x < (f->pos.x + f->length)))
-				return f;
-	return NULL;
-}
-
-Label*
-find_label(Pos pos){
-	Label *l;
-	for (l = labels; l != NULL; l = l->next)
-		if ((pos.y == l->pos.y) && (pos.x >= l->pos.x) && (pos.x < (l->pos.x + l->length)))
-				return l;
-	return NULL;
-}
-
-Field*
-find_next_field(Pos p){
-	Field *f, *found;
-	
-	if (!fields)
-		return NULL;
-	if (f = find_field(p)){
-		p = f->pos;
-		p.x += f->length;
-	}
-	
-	found = fields;
-	for (f = fields; f != NULL; f = f->next)
-		if (    ((f->pos.y == p.y) && (f->pos.x >= p.x) && (( found->pos.y != f->pos.y ) || (found->pos.x > f->pos.x)))
-		     || ((f->pos.y == found->pos.y) && (f->pos.x < found->pos.x) && (f->pos.x >= p.x))
-		     || ((f->pos.y > p.y) && ((f->pos.y < found->pos.y) || ((f->pos.y == found->pos.y) && (f->pos.x < found->pos.x)))))
-		     	found = f;
-	if ((found->pos.y < p.y) || ((found->pos.y == p.y) && (found->pos.x < p.x)))
-		return find_first_field();
-	return found;
-}
-
-Field*
-find_first_field(){
-	Pos p;
-	Field *f;
-	
-	p.x = 0;
-	p.y = 0;
-	if (f = find_field(p))
-		return f;
-	return find_next_field(p);
-}
-
-void
-addField(Field *new){
-	new->next = fields;
-	fields = new;
-}
-
-void
-addLabel(Label *new){
-	new->next = labels;
-	labels = new;
-}
-
 void
 setup(){
 	int i;
@@ -248,84 +153,13 @@ cleanup(){
 	endwin();
 }
 
-void
-move_cursor(Pos pos){
-	move(pos.y, pos.x);
-}
-
-void
-update_cursor(){
-	move_cursor(cursor);
-	refresh();
+void draw_all(){
+	wrefresh(curscr);
 }
 
 void redraw_screen(){
 	wrefresh(curscr);
-	move_cursor(cursor);
 	draw_all();
-}
-
-void
-enter_character(unsigned int code){
-	addch(code);
-	refresh();
-	cursor_advance();
-}
-
-void
-cursor_advance(){
-	cursor.x++;
-	if (cursor.x >= width){
-		cursor.x = 0;
-		cursor_down();
-	}
-}
-
-void
-cursor_up(){
-	if (cursor.y < 1)
-		cursor.y = height;
-	cursor.y--;
-	update_cursor();
-}
-
-void
-cursor_down(){
-	cursor.y++;
-	if (cursor.y >= height)
-		cursor.y = 0;
-	update_cursor();
-}
-
-void
-cursor_left(){
-	if (cursor.x < 1)
-		cursor.x = width;
-	cursor.x--;
-	update_cursor();
-}
-
-void
-cursor_right(){
-	cursor.x++;
-	if (cursor.x >= width)
-		cursor.x = 0;
-	update_cursor();
-}
-
-void
-next_field(){
-	Field *f;
-	if (f = find_next_field(cursor))
-		cursor = f->pos;
-	update_cursor();
-}
-
-void
-next_line(){
-	cursor.x = 0;
-	cursor_down();
-	next_field();
 }
 
 void
@@ -340,38 +174,6 @@ usage(){
 	exit(EXIT_FAILURE);
 }
 
-void
-draw_fields(){
-	Field *f;
-	unsigned int i;
-	for (f = fields; f != NULL; f = f->next){
-		move_cursor(f->pos);
-		attrset(ATTR_INPUT);
-		addstr(f->content);
-		attrset(ATTR_INPUT_EMPTY);
-		for (i = strlen(f->content); i < f->length; i++)
-			addch(' ');
-	}
-}
-
-void
-draw_labels(){
-	Label *l;
-	unsigned int i;
-	attrset(ATTR_LABEL);
-	for (l = labels; l != NULL; l = l->next){
-		move_cursor(l->pos);
-		addstr(l->text);
-	}
-}
-
-void
-draw_all(){
-	draw_fields();
-	draw_labels();
-	update_cursor();
-}
-
 int
 main(int argc, char *argv[]){
 	setup();
@@ -379,45 +181,33 @@ main(int argc, char *argv[]){
 	
 	
 	/* test entries */
-	Label *label = calloc(sizeof(Label), 1);
-	label->pos.x = 3;
-	label->pos.y = 2;
-	label->text = "Test label";
-	label->length = strlen(label->text);
-	addLabel(label);
-
-	Field *field = calloc(sizeof(Field), 1);
-	field->pos.x = 1;
-	field->pos.y = 4;
-	field->length = 20;
-	field->content = calloc(sizeof(char), field->length+1);
-	sprintf(field->content, "eins");
-	addField(field);
+	FIELD *field1, *field2, *field3, *f;
+	FIELD *fields[] = {field1, field2, field3, NULL};
+	FORM  *form;
 	
-	field = calloc(sizeof(Field), 1);
-	field->pos.x = 31;
-	field->pos.y = 4;
-	field->length = 20;
-	field->content = calloc(sizeof(char), field->length+1);
-	sprintf(field->content, "zwei");
-	addField(field);
+	field1 = new_field(1, 15, 2,  4, 0, 0);
+	field2 = new_field(1, 20, 5,  4, 0, 0);
+	field3 = new_field(1, 20, 5, 30, 0, 0);
 
-	field = calloc(sizeof(Field), 1);
-	field->pos.x = 1;
-	field->pos.y = 6;
-	field->length = 20;
-	field->content = calloc(sizeof(char), field->length+1);
-	sprintf(field->content, "drei");
-	addField(field);
+	form = new_form(fields);
+	
+	post_form(form);
+	
+	wrefresh(curscr);
 
-
-	if (field = find_first_field())
-		cursor = field->pos;
-	else {
-		cursor.x = 0;
-		cursor.y = 0;
+	unpost_form(form);
+	
+	free_form(form);
+	
+	for (f = fields[0]; f != NULL; f++){
+		free_field(f);
 	}
+	
+	cleanup();
+	return 0;
+}
 
+/*
 	draw_all();
 	
 	while(running){
@@ -456,7 +246,7 @@ main(int argc, char *argv[]){
 					} else
 						eprint("%04o;", code);
 			}
-			if(r == 1) /* no data available on pty's */
+			if(r == 1) /* no data available on pty's * /
 				continue;
 		}
 
@@ -465,3 +255,4 @@ main(int argc, char *argv[]){
 	cleanup();
 	return 0;
 }
+*/
