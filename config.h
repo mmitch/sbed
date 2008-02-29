@@ -34,5 +34,6 @@ Key keys[] = {
 	{ KEY_RIGHT,	cursor_right },
 	{ '\t',		next_field },
 	{ '\n',		next_line },
+	{ CTRL('l'),	redraw_screen },
 };
 

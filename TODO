@@ -1,5 +1,7 @@
  sbed TODO file
 
+- fix redraw_screen()
+
 * step 2
 
  - open a screen window of fixed size

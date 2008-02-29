@@ -82,6 +82,7 @@ void cursor_right();
 void next_field();
 void next_line();
 void quit();
+void redraw_screen();
 
 /* internal functions */
 void draw_all();
@@ -258,9 +259,16 @@ update_cursor(){
 	refresh();
 }
 
+void redraw_screen(){
+	wrefresh(curscr);
+	move_cursor(cursor);
+	draw_all();
+}
+
 void
 enter_character(unsigned int code){
 	addch(code);
+	refresh();
 	cursor_advance();
 }
 
