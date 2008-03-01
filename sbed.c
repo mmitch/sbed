@@ -181,35 +181,21 @@ main(int argc, char *argv[]){
 	
 	
 	/* test entries */
-	FIELD *field1, *field2, *field3, *f;
-	FIELD *fields[] = {field1, field2, field3, NULL};
+	FIELD *field1, *field2, *field3;
 	FORM  *form;
+	unsigned int i;
 	
 	field1 = new_field(1, 15, 2,  4, 0, 0);
 	field2 = new_field(1, 20, 5,  4, 0, 0);
 	field3 = new_field(1, 20, 5, 30, 0, 0);
 
+	FIELD *fields[] = {field1, field2, field3, NULL};
 	form = new_form(fields);
 	
 	post_form(form);
 	
 	wrefresh(curscr);
 
-	unpost_form(form);
-	
-	free_form(form);
-	
-	for (f = fields[0]; f != NULL; f++){
-		free_field(f);
-	}
-	
-	cleanup();
-	return 0;
-}
-
-/*
-	draw_all();
-	
 	while(running){
 		int r, nfds = 0;
 		fd_set rd;
@@ -236,7 +222,7 @@ main(int argc, char *argv[]){
 			if(code >= 0){
 				if(key = find_key(code))
 					key->action.cmd();
-				else
+/*				else
 					if ((code >= 32) && (code < 128)){
 						if (find_field(cursor)){
 							enter_character(code);
@@ -244,15 +230,22 @@ main(int argc, char *argv[]){
 						} else
 							beep();
 					} else
-						eprint("%04o;", code);
+						eprint("%04o;", code);*/
 			}
-			if(r == 1) /* no data available on pty's * /
+			if(r == 1) /* no data available on pty's */
 				continue;
 		}
 
 	}
 
+	unpost_form(form);
+	
+	free_form(form);
+	
+	for (i = 0; fields[i] != NULL; i++){
+		free_field(fields[i]);
+	}
+	
 	cleanup();
 	return 0;
 }
-*/

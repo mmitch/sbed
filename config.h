@@ -30,4 +30,3 @@ Key keys[] = {
 	{ CTRL('q'),	quit },
 	{ CTRL('l'),	redraw_screen },
 };
-
