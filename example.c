@@ -39,28 +39,28 @@ int main()
 	refresh();
 
 	/* Loop through to get user requests */
-	while((ch = getch()) != KEY_F(1))
-	{	switch(ch)
-	{	case KEY_DOWN:
+	while((ch = getch()) != KEY_F(1)) {
+		switch(ch) {	
+		case KEY_DOWN:
 			/* Go to next field */
 			form_driver(my_form, REQ_NEXT_FIELD);
 			/* Go to the end of the present buffer */
 			/* Leaves nicely at the last character */
 			form_driver(my_form, REQ_END_LINE);
 			break;
-	case KEY_UP:
-		/* Go to previous field */
-		form_driver(my_form, REQ_PREV_FIELD);
-		form_driver(my_form, REQ_END_LINE);
-		break;
-	default:
-		/* If this is a normal character, it gets */
-		/* Printed				  */	
-		form_driver(my_form, ch);
-		break;
+		case KEY_UP:
+			/* Go to previous field */
+			form_driver(my_form, REQ_PREV_FIELD);
+			form_driver(my_form, REQ_END_LINE);
+			break;
+		default:
+			/* If this is a normal character, it gets */
+			/* Printed				  */	
+			form_driver(my_form, ch);
+			break;
+		}
 	}
-	}
-
+	
 	/* Un post form and free the memory */
 	unpost_form(my_form);
 	free_form(my_form);
