@@ -9,6 +9,7 @@ int main()
 {
 	FIELD *field[3];
 	FORM  *my_form;
+	int insert_mode;
 	int ch;
 	
 	/* Initialize curses */
@@ -38,25 +39,41 @@ int main()
 	mvprintw(6, 10, "Value 2:");
 	refresh();
 
+	/* set overwrite mode */
+	form_driver(my_form, REQ_OVL_MODE);
+	insert_mode = 0;
+
 	/* Loop through to get user requests */
-	while((ch = getch()) != KEY_F(1)) {
+	while((ch = getch()) != KEY_F(3)) {
 		switch(ch) {	
-		case KEY_DOWN:
-			/* Go to next field */
+		case '\t':
 			form_driver(my_form, REQ_NEXT_FIELD);
-			/* Go to the end of the present buffer */
-			/* Leaves nicely at the last character */
-			form_driver(my_form, REQ_END_LINE);
+			form_driver(my_form, REQ_BEG_LINE);
 			break;
-		case KEY_UP:
-			/* Go to previous field */
+		case KEY_BTAB:
 			form_driver(my_form, REQ_PREV_FIELD);
-			form_driver(my_form, REQ_END_LINE);
+			form_driver(my_form, REQ_BEG_LINE);
 			break;
+		case KEY_LEFT:
+			form_driver(my_form, REQ_LEFT_CHAR);
+			break;
+		case KEY_RIGHT:
+			form_driver(my_form, REQ_RIGHT_CHAR);
+			break;
+		case KEY_END:
+			form_driver(my_form, REQ_CLR_EOL);
+			break;
+		case KEY_IC:
+			insert_mode = 1 - insert_mode;
+			if (insert_mode)
+				form_driver(my_form, REQ_INS_MODE);
+			else
+				form_driver(my_form, REQ_OVL_MODE);
 		default:
 			/* If this is a normal character, it gets */
 			/* Printed				  */	
 			form_driver(my_form, ch);
+//			printf("%04o", ch);
 			break;
 		}
 	}
