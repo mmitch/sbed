@@ -126,6 +126,21 @@ sub mainloop {
 		    $self->{WIN}->move($self->{Y}, $self->{X});
 		}
 	    }
+	    elsif ($key eq KEY_STAB) {
+		my $offset;
+		my $widget = $self->_find($self->{X}, $self->{Y});
+		if ($widget) {
+		    $offset = $widget->x-$self->{X}-1;
+		} else {
+		    $offset = -1;
+		}
+		my $target = $self->_find_prev($self->{X}+$offset, $self->{Y});
+		if ($target) {
+		    $self->{X} = $target->{X};
+		    $self->{Y} = $target->{Y};
+		    $self->{WIN}->move($self->{Y}, $self->{X});
+		}
+	    }
 	    elsif ($key eq KEY_HOME) {
 		my $target = $self->_find_next(0, 0);
 		if ($target) {
@@ -182,6 +197,34 @@ sub _find_next {
 	    $y++;
 	    if ($y >= $self->{H}) {
 		$y = 0;
+	    }
+	}
+
+	last if $x == $sx and $y == $sy;
+    }
+
+    return undef;
+}
+
+# find an editable widget at position x,y or sooner
+sub _find_prev {
+    my $self = shift;
+    my ($sx, $sy) = (shift, shift);
+    my ($x, $y) = ($sx, $sy);
+
+    while (1) {
+	
+	my $found = $self->_find($x, $y);
+	if (defined $found and $found->editable) {
+	    return $found;
+	}
+
+	$x--;
+	if ($x < 0 ) {
+	    $x = $self->{W}-1;
+	    $y--;
+	    if ($y < 0) {
+		$y = $self->{H} - 1;
 	    }
 	}
 
