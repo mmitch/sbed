@@ -64,6 +64,17 @@ sub clean {
     $self->{WIN}->clear;
 }
 
+# move cursor to first editable widget
+sub cursor_home {
+    my $self = shift;
+
+    my $start = $self->_find_next(0, 0);
+    if ($start) {
+	$self->{X} = $start->{X};
+	$self->{Y} = $start->{Y};
+    }
+}
+
 # add one or more widgets
 sub add {
     my $self = shift;
@@ -73,6 +84,8 @@ sub add {
 # input loop until process request
 sub mainloop {
     my $self = shift;
+
+    $self->cursor_home;
     
     while (1) {
 
@@ -153,9 +166,33 @@ sub mainloop {
 	    # loop breakers
 	    last if $key eq KEY_F(3);   # quit
 	    last if $key eq "\n";       # process
+
+	    # character input
+	    if (length $key == 1 and ord $key > 31 ) {
+		my $widget = $self->_find($self->{X}, $self->{Y});
+		if (defined $widget and $widget->editable) {
+		    my $insert = $widget->addchar($self->{X}, $self->{Y}, $key);
+		    if (defined $insert) {
+			$widget->draw($self->{WIN});
+			$self->{WIN}->refresh;
+			$self->{X}++;
+			$widget = $self->_find($self->{X}, $self->{Y});
+			unless (defined $widget and $widget->editable) {
+			    my $target = $self->_find_next($self->{X}, $self->{Y});
+			    if ($target) {
+				$self->{X} = $target->{X};
+				$self->{Y} = $target->{Y};
+			    }
+			}
+			$self->{WIN}->move($self->{Y}, $self->{X});
+		    }
+		} else {
+		    beep;
+		}
+	    }
 	}
-	
-	$self->{CALLBACK}($key);
+
+	$self->{CALLBACK}($self, $key);
 
     }
 }
@@ -169,7 +206,7 @@ sub _find {
 
     foreach my $w (@{$self->{WIDGETS}}) {
 	if ($w->y == $y) {
-	    if ($w->x <= $x and $w->x+$w->w >= $x) {
+	    if ($w->x <= $x and $w->x + $w->w > $x) {
 		return $w;
 	    }
 	}

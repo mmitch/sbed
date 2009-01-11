@@ -61,5 +61,25 @@ sub draw {
     $win->attroff(A_UNDERLINE);
 }
 
+# enter a character
+sub addchar {
+    my $self = shift;
+    my ($x, $y) = (shift, shift);
+    my $char = shift;
+
+    my $pos = $x-$self->{X};
+
+    if ($pos >= 0 and $pos < $self->{W} and $y == $self->{Y}) {
+	# support overwrite/insert modes
+	if ($pos > length $self->{TEXT}) {
+	    $self->{TEXT} .= ' ' x ($pos - length $self->{TEXT});
+	}
+	substr ($self->{TEXT}, $pos, 1) = $char;
+	return 1;
+    }
+
+    return 0;
+}
+
 #### end
 1;

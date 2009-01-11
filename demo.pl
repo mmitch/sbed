@@ -16,7 +16,7 @@ use Honk::Label;
 use Honk::Textfield;
 use Curses;
 
-my $honk = Honk::Form->new(\&quit);
+my $honk = Honk::Form->new(\&callback);
 
 my @labels = (
 	      Honk::Label->new(1, 1, 'use [F3] to quit, [enter] to execute'),
@@ -34,13 +34,16 @@ $honk->add($val1, $val2, $result);
 
 $honk->mainloop();
 
-sub quit {
+sub callback {
+    my $form = shift;
     my $key = shift;
 
+    # quit?
     if ($key eq KEY_F(3)) {
 	exit 0;
     }
 
+    # process
     my $v1 = $val1->text;
     my $v2 = $val2->text;
     $v1 =~ tr/0-9//cd;
@@ -50,5 +53,7 @@ sub quit {
 
     $result->text( sprintf "%8d", 0+$v1+$v2 );
     
+    # cursor update
+    $form->cursor_home;
 }
 
