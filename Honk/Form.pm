@@ -126,7 +126,14 @@ sub mainloop {
 		    $self->{WIN}->move($self->{Y}, $self->{X});
 		}
 	    }
-
+	    elsif ($key eq KEY_HOME) {
+		my $target = $self->_find_next(0, 0);
+		if ($target) {
+		    $self->{X} = $target->{X};
+		    $self->{Y} = $target->{Y};
+		    $self->{WIN}->move($self->{Y}, $self->{X});
+		}
+	    }
 
 	    # loop breakers
 	    last if $key eq KEY_F(3);   # quit
